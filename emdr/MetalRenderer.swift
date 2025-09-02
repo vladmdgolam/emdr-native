@@ -9,6 +9,7 @@ struct RendererUniforms {
     var radius: Float
     var color: SIMD4<Float>
     var speed: Float
+    var safeInsets: SIMD4<Float> // left, right, top, bottom
 }
 
 final class MetalRenderer: NSObject, MTKViewDelegate {
@@ -24,7 +25,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         time: 0,
         radius: 20,
         color: SIMD4<Float>(1, 1, 1, 1),
-        speed: 400 // points per second
+        speed: 400, // points per second
+        safeInsets: .zero
     )
 
     init?(mtkView: MTKView) {
@@ -62,6 +64,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     func setSpeed(pointsPerSecond: Float) { uniforms.speed = pointsPerSecond }
     func setRadius(points: Float) { uniforms.radius = points }
     func setColor(_ color: SIMD4<Float>) { uniforms.color = color }
+    func setSafeAreaInsets(left: Float, right: Float, top: Float, bottom: Float) {
+        uniforms.safeInsets = SIMD4<Float>(left, right, top, bottom)
+    }
     func setPaused(_ paused: Bool) {
         if paused != isPaused {
             if paused {
