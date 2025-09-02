@@ -30,7 +30,6 @@ struct ContentView: View {
                     onPanChanged: { dy in handlePanChanged(dy) },
                     onPanEnded: { handlePanEnded() }
                 )
-                .ignoresSafeArea()
 
                 // HUD/Toast overlay only; no hit testing so gestures reach MetalView
                 Color.clear.allowsHitTesting(false)

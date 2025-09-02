@@ -41,9 +41,9 @@ fragment float4 fragment_dot(VertexOut in [[stage_in]], constant Uniforms& u [[b
     float2 p = in.uv * u.resolution;
 
     // Horizontal center travels back and forth between radius and width - radius
-    float usableWidth = max(0.0, u.resolution.x - (u.safeInsets.x + u.safeInsets.y) - 2.0 * u.radius);
+    float usableWidth = max(0.0, u.resolution.x - 2.0 * u.radius);
     float traveled = pingpong(u.time * u.speed, usableWidth);
-    float2 center = float2(u.safeInsets.x + u.radius + traveled, u.resolution.y * 0.5);
+    float2 center = float2(u.radius + traveled, u.resolution.y * 0.5);
 
     float dist = distance(p, center) - u.radius;
     float alpha = smoothstep(1.0, 0.0, dist); // anti-aliased edge

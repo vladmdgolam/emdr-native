@@ -21,8 +21,6 @@ struct MetalView: UIViewRepresentable {
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
             renderer.setPaused(paused)
-            let insets = view.safeAreaInsets
-            renderer.setSafeAreaInsets(left: Float(insets.left), right: Float(insets.right), top: Float(insets.top), bottom: Float(insets.bottom))
         }
 
         // Triple-finger tap recognizer
@@ -54,8 +52,6 @@ struct MetalView: UIViewRepresentable {
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
             renderer.setPaused(paused)
-            let insets = uiView.safeAreaInsets
-            renderer.setSafeAreaInsets(left: Float(insets.left), right: Float(insets.right), top: Float(insets.top), bottom: Float(insets.bottom))
         }
     }
 
