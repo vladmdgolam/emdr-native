@@ -8,11 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var pointsPerSecond: Float = 400
+    @State private var pointsPerSecond: Float = 2500
     @State private var paused: Bool = false
-    private let dotDiameter: CGFloat = 40
+    private let dotDiameter: CGFloat = 80
     @State private var showResetToast: Bool = false
     @State private var lastWidth: CGFloat = 0
+    @State private var isSliding: Bool = false
+    // pointsPerSecond is authoritative; default is 2500 pt/s
     
     var body: some View {
         GeometryReader { geometry in
@@ -23,42 +25,32 @@ struct ContentView: View {
                     dotRadius: Float(dotDiameter / 2),
                     color: SIMD4<Float>(1, 1, 1, 1),
                     paused: paused,
-                    onTripleTap: {
-                        paused = false
-                        // Recalculate default speed based on current width
-                        calculateSpeed(width: lastWidth)
-                        // Visual feedback
-                        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-                            showResetToast = true
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) {
-                                showResetToast = false
-                            }
-                        }
-                    }
+                    onTripleTap: { handleReset() },
+                    onTap: { paused.toggle() },
+                    onPanChanged: { dy in handlePanChanged(dy) },
+                    onPanEnded: { handlePanEnded() }
                 )
                 .ignoresSafeArea()
 
-                // Gesture layer
-                Color.clear
-                    .contentShape(Rectangle())
-                    .gesture(tapToPause)
-                    .simultaneousGesture(swipeToAdjustSpeed)
+                // HUD/Toast overlay only; no hit testing so gestures reach MetalView
+                Color.clear.allowsHitTesting(false)
 
-                // HUD Overlay
-                VStack {
-                    HStack {
-                        Text("Speed: \(Int(pointsPerSecond)) pt/s")
-                            .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(.ultraThinMaterial, in: Capsule())
+                // HUD Overlay (only while sliding) — show only the number (pt/s)
+                if isSliding {
+                    VStack {
+                        HStack {
+                            Text("\(Int(pointsPerSecond))")
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Color.black.opacity(0.6), in: Capsule())
+                            Spacer()
+                        }
+                        .padding([.top, .leading], 12)
                         Spacer()
                     }
-                    .padding([.top, .leading], 12)
-                    Spacer()
+                    .transition(.opacity)
                 }
 
                 // Reset toast
@@ -78,42 +70,35 @@ struct ContentView: View {
             }
             .onAppear {
                 lastWidth = geometry.size.width
-                calculateSpeed(width: geometry.size.width)
             }
             .onChange(of: geometry.size.width) { _, newWidth in
                 lastWidth = newWidth
-                calculateSpeed(width: newWidth)
             }
         }
     }
-    
-    private func calculateSpeed(width: CGFloat) {
-        // Keep behavior similar to web: map width to a one-way duration [0.5, 1.0]s
-        let minWidth: CGFloat = 320
-        let maxWidth: CGFloat = 428
-        let minDuration: CGFloat = 0.5
-        let maxDuration: CGFloat = 1.0
-        let clamped = max(minWidth, min(maxWidth, width))
-        let t = (clamped - minWidth) / (maxWidth - minWidth)
-        let duration = minDuration + t * (maxDuration - minDuration)
-        let travel = max(0, width - dotDiameter) // points traveled one-way by the center
-        pointsPerSecond = Float(travel / duration)
+
+    // MARK: - Gesture handlers via MetalView
+    private func handleReset() {
+        paused = false
+        pointsPerSecond = 2500
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) { showResetToast = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.9)) { showResetToast = false }
+        }
     }
 
-    // MARK: - Gestures
-    private var tapToPause: some Gesture {
-        TapGesture()
-            .onEnded { paused.toggle() }
+    private func handlePanChanged(_ dy: CGFloat) {
+        isSliding = true
+        // Up is negative dy -> increases speed; down decreases.
+        let deltaSpeed = Float(-dy) * 15.0 // scale factor
+        let newSpeed = max(100, min(8000, pointsPerSecond + deltaSpeed))
+        pointsPerSecond = newSpeed
     }
 
-    private var swipeToAdjustSpeed: some Gesture {
-        DragGesture(minimumDistance: 10, coordinateSpace: .local)
-            .onEnded { value in
-                // Up increases speed, Down decreases. Scale factor keeps it subtle.
-                let delta = Float(-value.translation.height) * 2.0 // pts -> points/sec
-                let newSpeed = max(50, min(3000, pointsPerSecond + delta))
-                pointsPerSecond = newSpeed
-            }
+    private func handlePanEnded() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
+            withAnimation(.easeOut(duration: 0.2)) { isSliding = false }
+        }
     }
 }
 
