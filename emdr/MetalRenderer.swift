@@ -17,6 +17,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     private let pipelineState: MTLRenderPipelineState
 
     private var startTime: CFTimeInterval = CACurrentMediaTime()
+    private var accumulatedTime: CFTimeInterval = 0
+    private var isPaused: Bool = false
     private var uniforms = RendererUniforms(
         resolution: .zero,
         time: 0,
@@ -60,12 +62,24 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     func setSpeed(pointsPerSecond: Float) { uniforms.speed = pointsPerSecond }
     func setRadius(points: Float) { uniforms.radius = points }
     func setColor(_ color: SIMD4<Float>) { uniforms.color = color }
+    func setPaused(_ paused: Bool) {
+        if paused != isPaused {
+            if paused {
+                // Freeze time at current accumulated value
+                accumulatedTime = CACurrentMediaTime() - startTime
+            } else {
+                // Resume: reset start time so accumulated time continues
+                startTime = CACurrentMediaTime() - accumulatedTime
+            }
+            isPaused = paused
+        }
+    }
 
     // MARK: - MTKViewDelegate
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         uniforms.resolution = SIMD2<Float>(Float(size.width), Float(size.height))
         // Reset start time so speed change appears immediate on orientation change
-        startTime = CACurrentMediaTime()
+        startTime = CACurrentMediaTime() - accumulatedTime
     }
 
     func draw(in view: MTKView) {
@@ -75,7 +89,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
               let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor)
         else { return }
 
-        uniforms.time = Float(CACurrentMediaTime() - startTime)
+        let now = CACurrentMediaTime()
+        if isPaused {
+            // Keep uniforms.time constant while paused
+            uniforms.time = Float(accumulatedTime)
+        } else {
+            uniforms.time = Float(now - startTime)
+        }
 
         encoder.setRenderPipelineState(pipelineState)
         encoder.setFragmentBytes(&uniforms, length: MemoryLayout<RendererUniforms>.stride, index: 0)
@@ -88,4 +108,3 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
         commandBuffer.commit()
     }
 }
-

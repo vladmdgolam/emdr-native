@@ -5,6 +5,7 @@ struct MetalView: UIViewRepresentable {
     var speed: Float = 400 // points/sec
     var dotRadius: Float = 20
     var color: SIMD4<Float> = SIMD4<Float>(1, 1, 1, 1)
+    var paused: Bool = false
 
     func makeUIView(context: Context) -> MTKView {
         let view = MTKView()
@@ -15,6 +16,7 @@ struct MetalView: UIViewRepresentable {
             renderer.setSpeed(pointsPerSecond: speed)
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
+            renderer.setPaused(paused)
         }
         return view
     }
@@ -24,6 +26,7 @@ struct MetalView: UIViewRepresentable {
             renderer.setSpeed(pointsPerSecond: speed)
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
+            renderer.setPaused(paused)
         }
     }
 
@@ -33,4 +36,3 @@ struct MetalView: UIViewRepresentable {
         var renderer: MetalRenderer?
     }
 }
-
