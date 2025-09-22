@@ -1,6 +1,6 @@
-# EMDR iOS App
+# EMDR iOS & macOS App
 
-A Metal-powered EMDR (Eye Movement Desensitization and Reprocessing) therapy app for iOS, macOS, and visionOS.
+A Metal-powered EMDR (Eye Movement Desensitization and Reprocessing) therapy app for iOS and macOS.
 
 ## Overview
 
@@ -17,21 +17,23 @@ This SwiftUI-based application provides smooth bilateral stimulation through a m
 
 ## Controls
 
-| Gesture | Action |
-|---------|--------|
-| **Single Tap** | Pause/Resume movement |
-| **Triple Tap** | Reset to default speed (2500 pt/s) |
+| Gesture           | Action                                    |
+| ----------------- | ----------------------------------------- |
+| **Single Tap**    | Pause/Resume movement                     |
+| **Triple Tap**    | Reset to default speed (2500 pt/s)        |
 | **Vertical Drag** | Adjust speed (up = faster, down = slower) |
 
 ## Technical Details
 
 ### Architecture
+
 - **SwiftUI** for the user interface
 - **Metal** for high-performance rendering
 - **Custom MetalView** for gesture handling and dot animation
 - **MVVM pattern** with `@State` property wrappers
 
 ### Performance
+
 - Default speed: 2500 points/second
 - Speed range: 100-8000 points/second
 - 60fps rendering with Metal
@@ -41,19 +43,20 @@ This SwiftUI-based application provides smooth bilateral stimulation through a m
 
 - **iOS**: 26.0+
 - **macOS**: 15.6+
-- **visionOS**: 26.0+
 - **Xcode**: 16.0+
 - **Swift**: 5.0+
 
 ## Installation
 
 1. Clone the repository:
+
    ```bash
    git clone <repository-url>
    cd emdr
    ```
 
 2. Open the project:
+
    ```bash
    open emdr.xcodeproj
    ```
@@ -86,6 +89,7 @@ emdr/
 ### Customization
 
 The app can be easily customized by modifying:
+
 - Default speed in `ContentView.swift`
 - Dot size via `dotDiameter` property
 - Color scheme in the Metal renderer
@@ -110,6 +114,7 @@ This app is designed as a tool to support EMDR therapy but should only be used u
 ## Support
 
 For issues or questions:
+
 - Open an issue in this repository
 - Contact: [Your contact information]
 
