@@ -13,6 +13,7 @@ struct MetalView: UIViewRepresentable {
     var onTap: (() -> Void)? = nil
     var onPanChanged: ((CGFloat) -> Void)? = nil
     var onPanEnded: (() -> Void)? = nil
+    var safeAreaInsets: EdgeInsets = EdgeInsets()
 
     func makeUIView(context: Context) -> MTKView {
         let view = MTKView()
@@ -24,6 +25,7 @@ struct MetalView: UIViewRepresentable {
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
             renderer.setPaused(paused)
+            updateSafeArea(on: renderer, using: view)
         }
 
         // Triple-finger tap recognizer
@@ -55,10 +57,20 @@ struct MetalView: UIViewRepresentable {
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
             renderer.setPaused(paused)
+            updateSafeArea(on: renderer, using: uiView)
         }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(onTripleTap: onTripleTap, onTap: onTap, onPanChanged: onPanChanged, onPanEnded: onPanEnded) }
+
+    private func updateSafeArea(on renderer: MetalRenderer, using view: MTKView) {
+        let scale = view.window?.screen.scale ?? UIScreen.main.scale
+        let left = Float(safeAreaInsets.leading) * Float(scale)
+        let right = Float(safeAreaInsets.trailing) * Float(scale)
+        let top = Float(safeAreaInsets.top) * Float(scale)
+        let bottom = Float(safeAreaInsets.bottom) * Float(scale)
+        renderer.setSafeAreaInsets(left: left, right: right, top: top, bottom: bottom)
+    }
 
     final class Coordinator: NSObject {
         var renderer: MetalRenderer?
@@ -116,6 +128,7 @@ struct MetalView: NSViewRepresentable {
     var onTap: (() -> Void)? = nil
     var onPanChanged: ((CGFloat) -> Void)? = nil
     var onPanEnded: (() -> Void)? = nil
+    var safeAreaInsets: EdgeInsets = EdgeInsets()
 
     func makeNSView(context: Context) -> MTKView {
         let view = MTKView()
@@ -127,6 +140,7 @@ struct MetalView: NSViewRepresentable {
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
             renderer.setPaused(paused)
+            updateSafeArea(on: renderer, using: view)
         }
 
         // Triple-click recognizer (macOS analogue to triple-finger tap)
@@ -152,10 +166,20 @@ struct MetalView: NSViewRepresentable {
             renderer.setRadius(points: dotRadius)
             renderer.setColor(color)
             renderer.setPaused(paused)
+            updateSafeArea(on: renderer, using: nsView)
         }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(onTripleTap: onTripleTap, onTap: onTap, onPanChanged: onPanChanged, onPanEnded: onPanEnded) }
+
+    private func updateSafeArea(on renderer: MetalRenderer, using view: MTKView) {
+        let scale = view.window?.backingScaleFactor ?? NSScreen.main?.backingScaleFactor ?? 1.0
+        let left = Float(safeAreaInsets.leading) * Float(scale)
+        let right = Float(safeAreaInsets.trailing) * Float(scale)
+        let top = Float(safeAreaInsets.top) * Float(scale)
+        let bottom = Float(safeAreaInsets.bottom) * Float(scale)
+        renderer.setSafeAreaInsets(left: left, right: right, top: top, bottom: bottom)
+    }
 
     final class Coordinator: NSObject {
         var renderer: MetalRenderer?
@@ -212,6 +236,7 @@ struct MetalView: View {
     var onTap: (() -> Void)? = nil
     var onPanChanged: ((CGFloat) -> Void)? = nil
     var onPanEnded: (() -> Void)? = nil
+    var safeAreaInsets: EdgeInsets = EdgeInsets()
 
     var body: some View {
         Text("MetalView is not supported on this platform.")
