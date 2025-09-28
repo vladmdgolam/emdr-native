@@ -6,6 +6,9 @@
 //
 
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct ContentView: View {
     @State private var pointsPerSecond: Float = 2500
@@ -18,6 +21,8 @@ struct ContentView: View {
     
     var body: some View {
         GeometryReader { geometry in
+            let safeArea = resolvedSafeAreaInsets(from: geometry)
+
             ZStack {
                 // Metal-backed moving dot
                 MetalView(
@@ -25,11 +30,13 @@ struct ContentView: View {
                     dotRadius: Float(dotDiameter / 2),
                     color: SIMD4<Float>(1, 1, 1, 1),
                     paused: paused,
+                    safeAreaInsets: safeArea,
                     onTripleTap: { handleReset() },
                     onTap: { paused.toggle() },
                     onPanChanged: { dy in handlePanChanged(dy) },
                     onPanEnded: { handlePanEnded() }
                 )
+                .ignoresSafeArea()
 
                 // HUD/Toast overlay only; no hit testing so gestures reach MetalView
                 Color.clear.allowsHitTesting(false)
@@ -46,7 +53,8 @@ struct ContentView: View {
                                 .background(Color.black.opacity(0.6), in: Capsule())
                             Spacer()
                         }
-                        .padding([.top, .leading], 12)
+                        .padding(.top, safeArea.top + 12)
+                        .padding(.leading, safeArea.leading + 12)
                         Spacer()
                     }
                     .transition(.opacity)
@@ -63,7 +71,7 @@ struct ContentView: View {
                             .background(Color.black.opacity(0.7), in: Capsule())
                         Spacer()
                     }
-                    .padding(.top, 60)
+                    .padding(.top, safeArea.top + 60)
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
             }
@@ -74,6 +82,7 @@ struct ContentView: View {
                 lastWidth = newWidth
             }
         }
+        .background(Color.black.ignoresSafeArea())
     }
 
     // MARK: - Gesture handlers via MetalView
@@ -98,6 +107,26 @@ struct ContentView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
             withAnimation(.easeOut(duration: 0.2)) { isSliding = false }
         }
+    }
+
+    private func resolvedSafeAreaInsets(from geometry: GeometryProxy) -> EdgeInsets {
+        #if canImport(UIKit)
+        let geometryInsets = geometry.safeAreaInsets
+        if geometryInsets.top == 0,
+           geometryInsets.leading == 0,
+           geometryInsets.bottom == 0,
+           geometryInsets.trailing == 0,
+           let windowScene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first(where: { $0.activationState == .foregroundActive }),
+           let window = windowScene.windows.first(where: { $0.isKeyWindow }) ?? windowScene.windows.first {
+            let insets = window.safeAreaInsets
+            return EdgeInsets(top: insets.top, leading: insets.left, bottom: insets.bottom, trailing: insets.right)
+        }
+        return geometryInsets
+        #else
+        return geometry.safeAreaInsets
+        #endif
     }
 }
 
